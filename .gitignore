@@ -1,2 +1,5 @@
 # Project exclude paths
 /venv/
+
+# ignore caches
+__pycache__

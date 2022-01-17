@@ -1,0 +1,68 @@
+name = "Default"
+
+[layouts]
+
+[layouts.main]
+
+[layouts.main.prime]
+side = "?"
+top = "?"
+tall = "?"
+short = "?"
+
+side_x2 = "?"
+top_x2 = "?"
+tall_x2 = "?"
+short_x2 = "?"
+
+side_top = "?"
+side_tall = "?"
+side_short = "?"
+top_tall = "?"
+top_short = "?"
+tall_short = "?"
+
+[layouts.main.kit]
+tour = "?"
+up = "?"
+down = "?"
+left = "?"
+right = "?"
+c1 = "?"
+c2 = "?"
+
+top_up = "?"
+top_down = "?"
+top_left = "?"
+top_right = "?"
+side_up = "?"
+side_down = "?"
+side_left = "?"
+side_right = "?"
+
+tall_c1 = "?"
+tall_c2 = "?"
+short_c1 = "?"
+short_c2 = "?"
+
+[layouts.main.knob]
+press = "?"
+turn = "?"
+
+side_turn = "?"
+top_turn = "?"
+tall_turn = "?"
+short_turn = "?"
+
+[layouts.main.scroll]
+press = "?"
+turn = "?"
+
+side_turn = "?"
+top_turn = "?"
+tall_turn = "?"
+short_turn = "?"
+
+[layouts.main.dial]
+press = "?"
+turn = "?"
