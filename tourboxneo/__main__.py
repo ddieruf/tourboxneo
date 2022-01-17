@@ -1,48 +1,61 @@
 import argparse
 import logging
 import signal
-import sys
 import os
 import pathlib
 
-from .config import *
-from .reader import *
-from .writer import *
+from .config import Config
+from .reader import Reader
+from .driver import Driver
 
-logger = logging.getLogger(__name__)
-
-exiting = False
+logger = logging.getLogger('tourboxneo')
 
 
-def exit_gracefully(self, *args):
-    exiting = True
+class GracefulKiller:
+    exiting = False
+
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+    def exit_gracefully(self, *args):
+        self.exiting = True
 
 
 def main():
+    killer = GracefulKiller()
+
     parser = argparse.ArgumentParser(prog='tourboxneo',
                                      description='TourBox NEO Service')
     parser.add_argument('config',
                         type=argparse.FileType('r'),
                         help='TOML-formatted definitions file')
+    parser.add_argument('--device',
+                        type=str,
+                        default='/dev/ttyACM0',
+                        help='device file')
+    parser.add_argument('--pidfile',
+                        type=str,
+                        default=os.getenv('pidfile', 'tourboxneo.pid'),
+                        help='pid file')
+    parser.add_argument('-v',
+                        '--verbose',
+                        action='count',
+                        default=0)
 
     args = parser.parse_args()
+
+    logger.setLevel(30 - (max(args.verbose, 2) * 10))
 
     config = Config(args.config)
 
     # pid file
-    pidfile = os.getenv('pidfile') or "tourbox.pid"
-    p = pathlib.Path(pidfile)
+    p = pathlib.Path(args.pidfile)
     p.write_text(str(os.getpid()))
 
-    # signals
-    signal.signal(signal.SIGINT, exit_gracefully)
-    signal.signal(signal.SIGTERM, exit_gracefully)
-
-    with Reader(dev_path=sys.argv[1]) as reader, Writer(config) as writer:
-        while not exiting:
-            btn = reader.tick()
-            writer.process(btn)
-        logger.debug('Exiting Tourbox Daemon')
+    with Driver(Reader(args.device), config) as driver:
+        while not killer.exiting:
+            driver.tick()
 
 
 if __name__ == '__main__':

@@ -1,5 +1,7 @@
-import toml
 import logging
+import toml
+
+from .commands import library
 
 logger = logging.getLogger(__name__)
 
@@ -7,7 +9,7 @@ logger = logging.getLogger(__name__)
 class Config:
 
     def __init__(self, f):
-        logger.info(f'reading {f.name}')
+        logger.info('reading %s', f.name)
 
         data = toml.loads(f.read())
 
@@ -21,4 +23,9 @@ class Config:
         if self.layouts['main'] is None:
             raise RuntimeError('no main layout')
 
-        logger.info(f'loaded {f.name}')
+        for l_name, layout in self.layouts.items():
+            for s_name, section in layout.items():
+                for key, cmd_str in section.items():
+                    section[key] = library.lookup(cmd_str)
+
+        logger.info('loaded %s', f.name)

@@ -7,7 +7,7 @@ name = "Default"
 [layouts.main.prime]
 side = "?"
 top = "?"
-tall = "?"
+tall = "space"
 short = "?"
 
 side_x2 = "?"
@@ -56,7 +56,7 @@ short_turn = "?"
 
 [layouts.main.scroll]
 press = "?"
-turn = "?"
+turn = "wheel_rev"
 
 side_turn = "?"
 top_turn = "?"
@@ -65,4 +65,4 @@ short_turn = "?"
 
 [layouts.main.dial]
 press = "?"
-turn = "?"
+turn = "hwheel"

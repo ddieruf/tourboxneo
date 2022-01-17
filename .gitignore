@@ -3,3 +3,6 @@
 
 # ignore caches
 __pycache__
+
+# ignore pidfile
+tourboxneo.pid
