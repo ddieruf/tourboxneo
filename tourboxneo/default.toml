@@ -66,3 +66,17 @@ short_turn = "?"
 [layouts.main.dial]
 press = "?"
 turn = "hwheel"
+
+[keys]
+
+[keys.taskmngr]
+key = "delete"
+ctrl = true
+alt = true
+
+[menus]
+
+[menus.layouts]
+
+[[menus.layouts.entry]]
+func = "layout(main)"
