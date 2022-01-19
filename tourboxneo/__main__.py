@@ -2,7 +2,7 @@ import argparse
 import logging
 import signal
 import os
-import pathlib
+from pathlib import Path
 
 from .config import Config
 from .reader import Reader
@@ -27,21 +27,20 @@ def main():
 
     parser = argparse.ArgumentParser(prog='tourboxneo',
                                      description='TourBox NEO Service')
-    parser.add_argument('config',
-                        type=argparse.FileType('r'),
+    parser.add_argument('-c',
+                        '--config',
+                        type=Path,
                         help='TOML-formatted definitions file')
-    parser.add_argument('--device',
-                        type=str,
-                        default='/dev/ttyACM0',
+    parser.add_argument('-d',
+                        '--device',
+                        type=Path,
                         help='device file')
-    parser.add_argument('--pidfile',
+    parser.add_argument('-p',
+                        '--pidfile',
                         type=str,
                         default=os.getenv('pidfile', 'tourboxneo.pid'),
                         help='pid file')
-    parser.add_argument('-v',
-                        '--verbose',
-                        action='count',
-                        default=0)
+    parser.add_argument('-v', '--verbose', action='count', default=0)
 
     args = parser.parse_args()
 
@@ -50,7 +49,7 @@ def main():
     config = Config(args.config)
 
     # pid file
-    p = pathlib.Path(args.pidfile)
+    p = Path(args.pidfile)
     p.write_text(str(os.getpid()))
 
     with Driver(Reader(args.device), config) as driver:
