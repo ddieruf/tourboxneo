@@ -5,8 +5,7 @@ import os
 import pathlib
 
 from .config import Config
-from .reader import Reader
-from .driver import Driver
+from . import Service
 
 logger = logging.getLogger('tourboxneo')
 
@@ -47,15 +46,15 @@ def main():
 
     logger.setLevel(30 - (max(args.verbose, 2) * 10))
 
-    config = Config(args.config)
+    config = Config.from_file(args.config)
 
     # pid file
     p = pathlib.Path(args.pidfile)
     p.write_text(str(os.getpid()))
 
-    with Driver(Reader(args.device), config) as driver:
+    with Service(config, args.device) as service:
         while not killer.exiting:
-            driver.tick()
+            service.tick()
 
 
 if __name__ == '__main__':

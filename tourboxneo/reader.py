@@ -27,19 +27,16 @@ BUTTONS = [
     Button('prime', 'top', 0x02),
     Button('prime', 'tall', 0x00),
     Button('prime', 'short', 0x03),
-
     Button('prime', 'tall_x2', 0x18),
     Button('prime', 'side_x2', 0x21),
     Button('prime', 'top_x2', 0x1f),
     Button('prime', 'short_x2', 0x1c),
-
     Button('prime', 'side_top', 0x20),
     Button('prime', 'side_tall', 0x1b),
     Button('prime', 'side_short', 0x1e),
     Button('prime', 'top_tall', 0x19),
     Button('prime', 'top_short', 0x1d),
     Button('prime', 'tall_short', 0x1a),
-
     Button('kit', 'up', 0x10),
     Button('kit', 'down', 0x11),
     Button('kit', 'left', 0x12),
@@ -47,7 +44,6 @@ BUTTONS = [
     Button('kit', 'c1', 0x22),
     Button('kit', 'c2', 0x23),
     Button('kit', 'tour', 0x2a),
-
     Button('kit', 'side_up', 0x14),
     Button('kit', 'side_down', 0x15),
     Button('kit', 'side_left', 0x16),
@@ -56,26 +52,22 @@ BUTTONS = [
     Button('kit', 'top_down', 0x2c),
     Button('kit', 'top_left', 0x2d),
     Button('kit', 'top_right', 0x2e),
-
     Button('kit', 'tall_c1', 0x24),
     Button('kit', 'tall_c2', 0x25),
     Button('kit', 'short_c1', 0x39),
     Button('kit', 'short_c2', 0x3a),
-
     Button('knob', 'press', 0x37),
     Button('knob', 'turn', 0x04),
     Button('knob', 'side_turn', 0x08),
     Button('knob', 'top_turn', 0x07),
     Button('knob', 'tall_turn', 0x05),
     Button('knob', 'short_turn', 0x06),
-
     Button('scroll', 'press', 0x0a),
     Button('scroll', 'turn', 0x09),
     Button('scroll', 'side_turn', 0x0e),
     Button('scroll', 'top_turn', 0x0d),
     Button('scroll', 'tall_turn', 0x0b),
     Button('scroll', 'short_turn', 0x0c),
-
     Button('dial', 'press', 0x38),
     Button('dial', 'turn', 0x0f),
 ]
@@ -90,6 +82,7 @@ class Reader:
         self.serial = None
 
     def __enter__(self):
+        logger.info('Starting TourBox Reader')
         self.serial = serial.Serial(self.dev_path, timeout=2)
         return self
 

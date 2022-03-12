@@ -2,81 +2,109 @@ name = "Default"
 
 [layouts]
 
+### Example entries
+# All examples assume they exist inside [layouts.?.knob].
+#
+## Unidirectional
+#
+# press = "none"
+# press = { action = "none", kind = "release" }
+# press = { action = "none", kind = "hold" }
+#
+## Bidirectional
+#
+# turn = { action = "none", rate = 1 }
+# turn = { action = "none", reverse = "none", rate = 1 }
+#
+
 [layouts.main]
 
 [layouts.main.prime]
-side = "?"
-top = "?"
+side = "none"
+top = "none"
 tall = "space"
-short = "?"
+short = "none"
 
-side_x2 = "?"
-top_x2 = "?"
-tall_x2 = "?"
-short_x2 = "?"
+side_x2 = "none"
+top_x2 = "none"
+tall_x2 = "none"
+short_x2 = "none"
 
-side_top = "?"
-side_tall = "?"
-side_short = "?"
-top_tall = "?"
-top_short = "?"
-tall_short = "?"
+side_top = "none"
+side_tall = "none"
+side_short = "none"
+top_tall = "none"
+top_short = "none"
+tall_short = "none"
 
 [layouts.main.kit]
-tour = "?"
-up = "?"
-down = "?"
-left = "?"
-right = "?"
-c1 = "?"
-c2 = "?"
+tour = "none"
+up = "none"
+down = "none"
+left = "none"
+right = "none"
+c1 = "none"
+c2 = "none"
 
-top_up = "?"
-top_down = "?"
-top_left = "?"
-top_right = "?"
-side_up = "?"
-side_down = "?"
-side_left = "?"
-side_right = "?"
+top_up = "none"
+top_down = "none"
+top_left = "none"
+top_right = "none"
+side_up = "none"
+side_down = "none"
+side_left = "none"
+side_right = "none"
 
-tall_c1 = "?"
-tall_c2 = "?"
-short_c1 = "?"
-short_c2 = "?"
+tall_c1 = "none"
+tall_c2 = "none"
+short_c1 = "none"
+short_c2 = "none"
 
 [layouts.main.knob]
-press = "?"
-turn = "?"
+press = "none"
+turn = "none"
 
-side_turn = "?"
-top_turn = "?"
-tall_turn = "?"
-short_turn = "?"
+side_turn = "none"
+top_turn = "none"
+tall_turn = "none"
+short_turn = "none"
 
 [layouts.main.scroll]
-press = "?"
-turn = "wheel_rev"
+press = "none"
+turn = "wheel-"
 
-side_turn = "?"
-top_turn = "?"
-tall_turn = "?"
-short_turn = "?"
+side_turn = "none"
+top_turn = "none"
+tall_turn = "none"
+short_turn = "none"
 
 [layouts.main.dial]
-press = "?"
+press = "none"
 turn = "hwheel"
 
-[keys]
+[shortcuts]
 
-[keys.taskmngr]
+#[shortcuts.?]
+#key = "none"
+#shift = true
+#ctrl = true
+#alt = true
+#super = true
+
+[shortcuts.taskmngr]
 key = "delete"
 ctrl = true
 alt = true
+
+[macros]
+
+[macros.tourbox]
+[[macros.tourbox.entries]]
+action = ""
 
 [menus]
 
 [menus.layouts]
 
-[[menus.layouts.entry]]
+[[menus.layouts.entries]]
 func = "layout(main)"
