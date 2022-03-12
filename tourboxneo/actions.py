@@ -9,7 +9,10 @@ class Action:
     def __init__(self, name):
         self.name = name
 
-    def act(self, controller, release):
+    def press(self, controller):
+        pass
+
+    def release(self, controller):
         pass
 
     def reverse(self):
@@ -22,8 +25,12 @@ class ActionKey(Action):
         super().__init__(name)
         self.key = key
 
-    def act(self, controller, release):
-        controller.write(e.EV_KEY, self.key, int(not release))
+    def press(self, controller, release):
+        controller.write(e.EV_KEY, self.key, 1)
+        controller.syn()
+
+    def release(self, controller, release):
+        controller.write(e.EV_KEY, self.key, 0)
         controller.syn()
 
 
@@ -34,9 +41,12 @@ class ActionRel(Action):
         self.rel = rel
         self.step = step
 
-    def act(self, controller, release):
-        step = 0 if release else self.step
-        controller.write(e.EV_REL, self.rel, step)
+    def press(self, controller):
+        controller.write(e.EV_REL, self.rel, self.step)
+        controller.syn()
+
+    def release(self, controller):
+        controller.write(e.EV_REL, self.rel, 0)
         controller.syn()
 
     def reverse(self):
@@ -48,7 +58,10 @@ class ActionMacro(Action):
     def __init__(self, name):
         super().__init__(name)
 
-    def act(self, controller, release):
+    def press(self, controller, release):
+        pass
+
+    def release(self, controller, release):
         pass
 
 
