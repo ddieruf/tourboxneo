@@ -1,5 +1,6 @@
 import logging
 import toml
+from pathlib import Path
 
 from .actions import library
 
@@ -196,12 +197,22 @@ class Config:
             self.menus[menu.name] = menu
 
     @staticmethod
-    def from_file(file):
-        logger.info('reading %s', file.name)
+    def from_file(config_path):
+        if config_path is None:
+            config_path = Path.home() / '.tourboxneo'
+        if not config_path.exists():
+            logger.info('falling back on default configuration')
+            config_path = Path(__file__).with_name('default.toml')
+        if not config_path.exists():
+            raise RuntimeError('No default configuration available')
 
-        data = toml.loads(file.read())
-        config = Config(data)
+        logger.info('reading %s', config_path.name)
 
-        logger.info('loaded %s', file.name)
+        with config_path.open('r') as config_text:
+            data = toml.loads(config_text.read())
+            config = Config(data)
+
+        logger.info('loaded %s', config_path.name)
 
         return config
+

@@ -1,14 +1,16 @@
-import serial
+from dataclasses import dataclass
 from time import sleep
 from evdev import UInput, ecodes as e
+from pathlib import Path
+import serial
 import logging
-from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
 RELEASE_MASK = 0x80
 REVERSE_MASK = 0x40
 BUTTON_MASK = ~(RELEASE_MASK | REVERSE_MASK)
+UEVENT_PRODUCT = 'PRODUCT=2e3c/5740/200'
 
 
 @dataclass
@@ -78,12 +80,26 @@ MAP = {b.byte: b for b in BUTTONS}
 class Reader:
 
     def __init__(self, dev_path):
+        if dev_path is not None and not dev_path.exists():
+            logger.warn('Specified device does not exist')
+            dev_path = None
+        if dev_path is None:
+            logger.info('Searching for device')
+            for d in Path('/sys/class/tty/').glob('*ACM*'):
+                uevent = d.joinpath('device/uevent').read_text()
+                if UEVENT_PRODUCT in uevent:
+                    dev_path = Path('/dev').joinpath(d.name)
+                    logger.info('Identified device %s', dev_path)
+                    break
+        if dev_path is None or not dev_path.exists():
+            raise RuntimeError('Could not find a device')
+
         self.dev_path = dev_path
         self.serial = None
 
     def __enter__(self):
         logger.info('Starting TourBox Reader')
-        self.serial = serial.Serial(self.dev_path, timeout=2)
+        self.serial = serial.Serial(str(self.dev_path), timeout=2)
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
@@ -94,15 +110,15 @@ class Reader:
             bs = self.serial.read()
         except serial.SerialException:
             msg = f"Can't read: {self.dev_path}, maybe unplugged or no permission?"
-            logging.warning(msg)
+            logging.warn(msg)
             sleep(1)
 
         if len(bs) > 0:
             b = bs[0]
             btn = MAP.get(b & BUTTON_MASK, None)
             if btn is None:
-                logger.warn(f'unknown byte {hex(b)}')
+                logger.warn(f'Unknown byte {hex(b)}')
             release = bool(b & RELEASE_MASK)
             reverse = bool(b & REVERSE_MASK)
-            logger.info(f'read: %s, rel=%s, rev=%s', btn, release, reverse)
+            logger.info(f'Read: %s, rel=%s, rev=%s', btn, release, reverse)
             return (btn, release, reverse)
