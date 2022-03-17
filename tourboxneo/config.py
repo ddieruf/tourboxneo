@@ -7,7 +7,7 @@ from .actions import library
 logger = logging.getLogger(__name__)
 
 
-class Button:
+class ButtonCfg:
 
     def __init__(self, name, data):
         self.name = name
@@ -20,8 +20,11 @@ class Button:
         if self.kind not in [None, 'release', 'hold']:
             raise RuntimeError('bad kind in ' + name)
 
+    def __repr__(self):
+        return f'ButtonCfg(name={self.name}, action={self.action}, kind={self.kind})'
 
-class Rotating:
+
+class DialCfg:
 
     def __init__(self, name, data):
         self.name = name
@@ -49,65 +52,68 @@ class Rotating:
         if not (1 <= self.rate <= 5):
             raise RuntimeError('bad rate in ' + name)
 
+    def __repr__(self):
+        return f'DialCfg(name={self.name}, action={self.action}, reverse={self.reverse}, rate={self.rate})'
+
 
 class Layout:
     controls = {
         'prime': {
-            'side': Button,
-            'top': Button,
-            'tall': Button,
-            'short': Button,
-            'top_x2': Button,
-            'side_x2': Button,
-            'tall_x2': Button,
-            'short_x2': Button,
-            'side_top': Button,
-            'side_tall': Button,
-            'side_short': Button,
-            'top_tall': Button,
-            'top_short': Button,
-            'tall_short': Button,
+            'side': ButtonCfg,
+            'top': ButtonCfg,
+            'tall': ButtonCfg,
+            'short': ButtonCfg,
+            'top_x2': ButtonCfg,
+            'side_x2': ButtonCfg,
+            'tall_x2': ButtonCfg,
+            'short_x2': ButtonCfg,
+            'side_top': ButtonCfg,
+            'side_tall': ButtonCfg,
+            'side_short': ButtonCfg,
+            'top_tall': ButtonCfg,
+            'top_short': ButtonCfg,
+            'tall_short': ButtonCfg,
         },
         'kit': {
-            'tour': Button,
-            'up': Button,
-            'down': Button,
-            'left': Button,
-            'right': Button,
-            'c1': Button,
-            'c2': Button,
-            'top_up': Button,
-            'top_down': Button,
-            'top_left': Button,
-            'top_right': Button,
-            'side_up': Button,
-            'side_down': Button,
-            'side_left': Button,
-            'side_right': Button,
-            'tall_c1': Button,
-            'tall_c2': Button,
-            'short_c1': Button,
-            'short_c2': Button,
+            'tour': ButtonCfg,
+            'up': ButtonCfg,
+            'down': ButtonCfg,
+            'left': ButtonCfg,
+            'right': ButtonCfg,
+            'c1': ButtonCfg,
+            'c2': ButtonCfg,
+            'top_up': ButtonCfg,
+            'top_down': ButtonCfg,
+            'top_left': ButtonCfg,
+            'top_right': ButtonCfg,
+            'side_up': ButtonCfg,
+            'side_down': ButtonCfg,
+            'side_left': ButtonCfg,
+            'side_right': ButtonCfg,
+            'tall_c1': ButtonCfg,
+            'tall_c2': ButtonCfg,
+            'short_c1': ButtonCfg,
+            'short_c2': ButtonCfg,
         },
         'knob': {
-            'press': Button,
-            'turn': Rotating,
-            'side_turn': Rotating,
-            'top_turn': Rotating,
-            'tall_turn': Rotating,
-            'short_turn': Rotating,
+            'press': ButtonCfg,
+            'turn': DialCfg,
+            'side_turn': DialCfg,
+            'top_turn': DialCfg,
+            'tall_turn': DialCfg,
+            'short_turn': DialCfg,
         },
         'scroll': {
-            'press': Button,
-            'turn': Rotating,
-            'side_turn': Rotating,
-            'top_turn': Rotating,
-            'tall_turn': Rotating,
-            'short_turn': Rotating,
+            'press': ButtonCfg,
+            'turn': DialCfg,
+            'side_turn': DialCfg,
+            'top_turn': DialCfg,
+            'tall_turn': DialCfg,
+            'short_turn': DialCfg,
         },
         'dial': {
-            'press': Button,
-            'turn': Rotating,
+            'press': ButtonCfg,
+            'turn': DialCfg,
         },
     }
 

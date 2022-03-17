@@ -21,7 +21,7 @@ class Button:
 
     def __repr__(self):
         byte = hex(self.byte)
-        return f"Button(group={self.group}, key={self.key}, byte={byte})"
+        return f'Button(group={self.group}, key={self.key}, byte={byte})'
 
 
 BUTTONS = [

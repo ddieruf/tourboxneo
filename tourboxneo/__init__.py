@@ -2,7 +2,6 @@ from evdev import UInput, ecodes as e
 import logging
 import toml
 
-from .config import Button, Rotating
 from .reader import Reader
 
 VERSION = '0.3'

@@ -39,12 +39,12 @@ tall_short = "none"
 
 [layouts.main.kit]
 tour = "none"
-up = "none"
-down = "none"
-left = "none"
-right = "none"
-c1 = "none"
-c2 = "none"
+up = "up"
+down = "down"
+left = "left"
+right = "right"
+c1 = "comma"
+c2 = "dot"
 
 top_up = "none"
 top_down = "none"
