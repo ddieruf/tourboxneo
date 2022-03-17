@@ -25,11 +25,11 @@ class ActionKey(Action):
         super().__init__(name)
         self.key = key
 
-    def press(self, controller, release):
+    def press(self, controller):
         controller.write(e.EV_KEY, self.key, 1)
         controller.syn()
 
-    def release(self, controller, release):
+    def release(self, controller):
         controller.write(e.EV_KEY, self.key, 0)
         controller.syn()
 
@@ -58,10 +58,10 @@ class ActionMacro(Action):
     def __init__(self, name):
         super().__init__(name)
 
-    def press(self, controller, release):
+    def press(self, controller):
         pass
 
-    def release(self, controller, release):
+    def release(self, controller):
         pass
 
 
