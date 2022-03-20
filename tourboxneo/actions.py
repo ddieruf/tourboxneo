@@ -1,7 +1,7 @@
 from evdev import ecodes as e
-import re
-import copy
 import logging
+import copy
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -16,12 +16,12 @@ class Action:
         self.cmd = cmd
 
     def with_mods(self, shift=False, ctrl=False, alt=False, cmd=False):
-        a = copy.copy(self)
-        a.shift = self.shift or shift
-        a.ctrl = self.ctrl or ctrl
-        a.alt = self.alt or alt
-        a.cmd = self.cmd or cmd
-        return a
+        new = copy.copy(self)
+        new.shift = self.shift or shift
+        new.ctrl = self.ctrl or ctrl
+        new.alt = self.alt or alt
+        new.cmd = self.cmd or cmd
+        return new
 
     def press(self, controller):
         if self.shift:
@@ -72,12 +72,10 @@ class ActionKey(Action):
     def press(self, controller):
         super().press(controller)
         controller.write(e.EV_KEY, self.key, 1)
-        controller.syn()
 
     def release(self, controller):
         super().release(controller)
         controller.write(e.EV_KEY, self.key, 0)
-        controller.syn()
 
     def __repr__(self):
         mods = self.__repr_mods__()
@@ -94,12 +92,10 @@ class ActionRel(Action):
     def press(self, controller):
         super().press(controller)
         controller.write(e.EV_REL, self.rel, self.step)
-        controller.syn()
 
     def release(self, controller):
         super().release(controller)
         controller.write(e.EV_REL, self.rel, 0)
-        controller.syn()
 
     def reverse(self):
         a = copy.copy(self)
@@ -168,6 +164,9 @@ class Library:
     def push(self, cmd):
         self.cmds[cmd.name] = cmd
 
+    def alias(self, alias, name):
+        self.cmds[alias] = self.cmds[name]
+
 
 library = Library()
 
@@ -185,14 +184,54 @@ library.push(ActionKey('end', e.KEY_END))
 library.push(ActionKey('pageup', e.KEY_PAGEUP))
 library.push(ActionKey('pagedown', e.KEY_PAGEDOWN))
 
-library.push(ActionKey('shift', e.KEY_LEFTSHIFT))
-library.push(ActionKey('ctrl', e.KEY_LEFTCTRL))
-library.push(ActionKey('alt', e.KEY_LEFTALT))
-library.push(ActionKey('cmd', e.KEY_LEFTMETA))
+library.push(ActionKey('lshift', e.KEY_LEFTSHIFT))
+library.alias('shift', 'lshift')
+library.push(ActionKey('lctrl', e.KEY_LEFTCTRL))
+library.alias('ctrl', 'lctrl')
+library.push(ActionKey('lalt', e.KEY_LEFTALT))
+library.alias('alt', 'lalt')
+library.push(ActionKey('lcmd', e.KEY_LEFTMETA))
+library.alias('cmd', 'lcmd')
+library.push(ActionKey('rshift', e.KEY_LEFTSHIFT))
+library.push(ActionKey('rctrl', e.KEY_LEFTCTRL))
+library.push(ActionKey('ralt', e.KEY_LEFTALT))
+library.push(ActionKey('rcmd', e.KEY_LEFTMETA))
 
 library.push(ActionKey('space', e.KEY_SPACE))
 library.push(ActionKey('tab', e.KEY_TAB))
 library.push(ActionKey('enter', e.KEY_ENTER))
+
+library.push(ActionKey('1', e.KEY_1))
+library.push(ActionKey('2', e.KEY_2))
+library.push(ActionKey('3', e.KEY_3))
+library.push(ActionKey('4', e.KEY_4))
+library.push(ActionKey('5', e.KEY_5))
+library.push(ActionKey('6', e.KEY_6))
+library.push(ActionKey('7', e.KEY_7))
+library.push(ActionKey('8', e.KEY_8))
+library.push(ActionKey('9', e.KEY_9))
+library.push(ActionKey('0', e.KEY_0))
+
+library.push(ActionKey('exclaim', e.KEY_1, shift=True))
+library.alias('!', 'exclaim')
+library.push(ActionKey('at', e.KEY_2, shift=True))
+library.alias('@', 'at')
+library.push(ActionKey('hash', e.KEY_3, shift=True))
+library.alias('#', 'hash')
+library.push(ActionKey('dollar', e.KEY_4, shift=True))
+library.alias('$', 'dollar')
+library.push(ActionKey('percent', e.KEY_5, shift=True))
+library.alias('%', 'percent')
+library.push(ActionKey('carat', e.KEY_6, shift=True))
+library.alias('^', 'carat')
+library.push(ActionKey('ampersand', e.KEY_7, shift=True))
+library.alias('&', 'ampersand')
+library.push(ActionKey('asterisk', e.KEY_8, shift=True))
+library.alias('*', 'asterisk')
+library.push(ActionKey('leftparen', e.KEY_9, shift=True))
+library.alias('(', 'leftparen')
+library.push(ActionKey('rightparen', e.KEY_0, shift=True))
+library.alias(')', 'rightparen')
 
 library.push(ActionKey('a', e.KEY_A))
 library.push(ActionKey('b', e.KEY_B))
@@ -222,27 +261,74 @@ library.push(ActionKey('y', e.KEY_Y))
 library.push(ActionKey('z', e.KEY_Z))
 
 library.push(ActionKey('minus', e.KEY_MINUS))
-library.push(ActionKey('-', e.KEY_MINUS))
+library.alias('-', 'minus')
 library.push(ActionKey('equal', e.KEY_EQUAL))
-library.push(ActionKey('=', e.KEY_EQUAL))
+library.alias('=', 'equal')
 library.push(ActionKey('leftbrace', e.KEY_LEFTBRACE))
-library.push(ActionKey('[', e.KEY_LEFTBRACE))
+library.alias('[', 'leftbrace')
 library.push(ActionKey('rightbrace', e.KEY_RIGHTBRACE))
-library.push(ActionKey(']', e.KEY_RIGHTBRACE))
+library.alias(']', 'rightbrace')
 library.push(ActionKey('semicolon', e.KEY_SEMICOLON))
-library.push(ActionKey(';', e.KEY_SEMICOLON))
+library.alias(';', 'semicolon')
 library.push(ActionKey('apostrophe', e.KEY_APOSTROPHE))
-library.push(ActionKey('\'', e.KEY_APOSTROPHE))
+library.alias('\'', 'apostrophe')
 library.push(ActionKey('grave', e.KEY_GRAVE))
-library.push(ActionKey('`', e.KEY_GRAVE))
+library.alias('`', 'grave')
 library.push(ActionKey('backslash', e.KEY_BACKSLASH))
-library.push(ActionKey('\\', e.KEY_BACKSLASH))
+library.alias('\\', 'backslash')
 library.push(ActionKey('comma', e.KEY_COMMA))
-library.push(ActionKey(',', e.KEY_COMMA))
+library.alias(',', 'comma')
 library.push(ActionKey('dot', e.KEY_DOT))
-library.push(ActionKey('.', e.KEY_DOT))
+library.alias('.', 'dot')
 library.push(ActionKey('slash', e.KEY_SLASH))
-library.push(ActionKey('/', e.KEY_SLASH))
+library.alias('/', 'slash')
+
+library.push(ActionKey('underscore', e.KEY_MINUS, shift=True))
+library.alias('_', 'underscore')
+library.push(ActionKey('plus', e.KEY_EQUAL, shift=True))
+library.alias('+', 'plus')
+library.push(ActionKey('leftcurly', e.KEY_LEFTBRACE, shift=True))
+library.alias('{', 'leftcurly')
+library.push(ActionKey('rightcurly', e.KEY_RIGHTBRACE, shift=True))
+library.alias('}', 'rightcurly')
+library.push(ActionKey('colon', e.KEY_SEMICOLON, shift=True))
+library.alias(':', 'colon')
+library.push(ActionKey('quote', e.KEY_APOSTROPHE, shift=True))
+library.alias('"', 'quote')
+library.push(ActionKey('tilde', e.KEY_GRAVE, shift=True))
+library.alias('~', 'tilde')
+library.push(ActionKey('pipe', e.KEY_BACKSLASH, shift=True))
+library.alias('|', 'pipe')
+library.push(ActionKey('leftangle', e.KEY_COMMA, shift=True))
+library.alias('lt', 'leftangle')
+library.alias('<', 'leftangle')
+library.push(ActionKey('rightangle', e.KEY_DOT, shift=True))
+library.alias('gt', 'rightangle')
+library.alias('>', 'rightangle')
+library.push(ActionKey('question', e.KEY_SLASH, shift=True))
+library.alias('?', 'question')
+
+library.push(ActionKey('kp1', e.KEY_KP1))
+library.push(ActionKey('kp2', e.KEY_KP2))
+library.push(ActionKey('kp3', e.KEY_KP3))
+library.push(ActionKey('kp4', e.KEY_KP4))
+library.push(ActionKey('kp5', e.KEY_KP5))
+library.push(ActionKey('kp6', e.KEY_KP6))
+library.push(ActionKey('kp7', e.KEY_KP7))
+library.push(ActionKey('kp8', e.KEY_KP8))
+library.push(ActionKey('kp9', e.KEY_KP9))
+library.push(ActionKey('kp0', e.KEY_KP0))
+library.push(ActionKey('kpslash', e.KEY_KPSLASH))
+library.push(ActionKey('kpasterisk', e.KEY_KPASTERISK))
+library.push(ActionKey('kpminus', e.KEY_KPMINUS))
+library.push(ActionKey('kpplus', e.KEY_KPPLUS))
+library.push(ActionKey('kpdot', e.KEY_KPDOT))
+library.push(ActionKey('kpenter', e.KEY_KPENTER))
+
+library.push(ActionKey('kpplusminus', e.KEY_KPPLUSMINUS))
+library.push(ActionKey('kpcomma', e.KEY_KPCOMMA))
+library.push(ActionKey('kpleftparen', e.KEY_KPLEFTPAREN))
+library.push(ActionKey('kprightparen', e.KEY_KPRIGHTPAREN))
 
 library.push(ActionKey('capslock', e.KEY_CAPSLOCK))
 library.push(ActionKey('numlock', e.KEY_NUMLOCK))
@@ -261,5 +347,19 @@ library.push(ActionKey('f10', e.KEY_F10))
 library.push(ActionKey('f11', e.KEY_F11))
 library.push(ActionKey('f12', e.KEY_F12))
 
+library.push(ActionKey('f13', e.KEY_F13))
+library.push(ActionKey('f14', e.KEY_F14))
+library.push(ActionKey('f15', e.KEY_F15))
+library.push(ActionKey('f16', e.KEY_F16))
+library.push(ActionKey('f17', e.KEY_F17))
+library.push(ActionKey('f18', e.KEY_F18))
+library.push(ActionKey('f19', e.KEY_F19))
+library.push(ActionKey('f20', e.KEY_F20))
+library.push(ActionKey('f21', e.KEY_F21))
+library.push(ActionKey('f22', e.KEY_F22))
+library.push(ActionKey('f23', e.KEY_F23))
+library.push(ActionKey('f24', e.KEY_F24))
+
 library.push(ActionRel('wheel', e.REL_WHEEL, 1))
 library.push(ActionRel('hwheel', e.REL_HWHEEL, 1))
+

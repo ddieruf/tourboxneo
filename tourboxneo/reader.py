@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from time import sleep
 from evdev import UInput, ecodes as e
 from pathlib import Path
 import serial
@@ -78,7 +77,6 @@ MAP = {b.byte: b for b in BUTTONS}
 
 
 class Reader:
-
     def __init__(self, dev_path):
         if dev_path is not None and not dev_path.exists():
             logger.warn('Specified device does not exist')
@@ -109,9 +107,9 @@ class Reader:
         try:
             bs = self.serial.read()
         except serial.SerialException:
-            msg = f"Can't read: {self.dev_path}, maybe unplugged or no permission?"
-            logging.warn(msg)
-            sleep(1)
+            msg = 'Can\'t read: %s, maybe unplugged or no permission?'
+            logging.error(msg, self.dev_path)
+            raise RuntimeError('Lost device')
 
         if len(bs) > 0:
             b = bs[0]
@@ -120,5 +118,5 @@ class Reader:
                 logger.warn(f'Unknown byte {hex(b)}')
             release = bool(b & RELEASE_MASK)
             reverse = bool(b & REVERSE_MASK)
-            logger.info(f'Read: %s, rel=%s, rev=%s', btn, release, reverse)
+            logger.debug('Read: %s, rel=%s, rev=%s', btn, release, reverse)
             return (btn, release, reverse)

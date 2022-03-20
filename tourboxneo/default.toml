@@ -22,8 +22,8 @@ name = "Default"
 [layouts.main.prime]
 side = "none"
 top = "none"
-tall = "space"
-short = "none"
+tall = { action = "space", kind = "release" }
+short = { action = "esc", kind = "release" }
 
 side_x2 = "none"
 top_x2 = "none"

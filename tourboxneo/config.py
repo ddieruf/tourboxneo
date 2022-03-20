@@ -7,29 +7,33 @@ from .actions import library
 logger = logging.getLogger(__name__)
 
 
-class ButtonCfg:
+class CtrlCfg:
+    pass
+
+
+class ButtonCfg(CtrlCfg):
 
     def __init__(self, name, data):
         self.name = name
-        action_str = data if type(data) is str else data['action']
+        action_str = data if isinstance(data, str) else data['action']
         self.action = library.lookup(action_str)
-        self.kind = None if type(data) is str else data['kind']
+        self.kind = 'tap' if isinstance(data, str) else data['kind']
 
         if self.action is None:
             raise RuntimeError('bad action in ' + name)
-        if self.kind not in [None, 'release', 'hold']:
+        if self.kind not in ['tap', 'release', 'hold']:
             raise RuntimeError('bad kind in ' + name)
 
     def __repr__(self):
         return f'ButtonCfg(name={self.name}, action={self.action}, kind={self.kind})'
 
 
-class DialCfg:
+class DialCfg(CtrlCfg):
 
     def __init__(self, name, data):
         self.name = name
-        if type(data) is str:
-            if '/' in data:
+        if isinstance(data, str):
+            if data != '/' and '/' in data:
                 data_f, data_r = data.split('/', 1)
                 self.action = library.lookup(data_f)
                 self.reverse = library.lookup(data_r)
@@ -136,6 +140,9 @@ class Layout:
             for c_name, c_data in s_data.items():
                 c = Layout.controls[s_name][c_name]
                 self.controls[s_name][c_name] = c(c_name, c_data)
+
+    def __repr__(self):
+        return f'Layout(name={self.name})'
 
 
 class Shortcut:
