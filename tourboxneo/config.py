@@ -2,126 +2,55 @@ import logging
 import toml
 from pathlib import Path
 
-from .actions import library
+from .actions import Library
+from .controls import ButtonCtrl, DialCtrl, controls
 
 logger = logging.getLogger(__name__)
 
 
-class CtrlCfg:
-    pass
+def parse_button(name, data, library):
+    action_str = data if isinstance(data, str) else data['action']
+    action = library.lookup(action_str)
+    kind = 'hold' if isinstance(data, str) else data['kind']
+
+    if action is None:
+        raise RuntimeError('bad action in ' + name)
+    if kind not in ['hold', 'up', 'down']:
+        raise RuntimeError('bad kind in ' + name)
+
+    return ButtonCtrl(name, action, kind)
 
 
-class ButtonCfg(CtrlCfg):
-
-    def __init__(self, name, data):
-        self.name = name
-        action_str = data if isinstance(data, str) else data['action']
-        self.action = library.lookup(action_str)
-        self.kind = 'tap' if isinstance(data, str) else data['kind']
-
-        if self.action is None:
-            raise RuntimeError('bad action in ' + name)
-        if self.kind not in ['tap', 'release', 'hold']:
-            raise RuntimeError('bad kind in ' + name)
-
-    def __repr__(self):
-        return f'ButtonCfg(name={self.name}, action={self.action}, kind={self.kind})'
-
-
-class DialCfg(CtrlCfg):
-
-    def __init__(self, name, data):
-        self.name = name
-        if isinstance(data, str):
-            if data != '/' and '/' in data:
-                data_f, data_r = data.split('/', 1)
-                self.action = library.lookup(data_f)
-                self.reverse = library.lookup(data_r)
-            else:
-                self.action = library.lookup(data)
-                self.reverse = self.action.reverse()
-            self.rate = 1
+def parse_dial(name, data, library):
+    if isinstance(data, str):
+        if data != '/' and '/' in data:
+            data_f, data_r = data.split('/', 1)
+            action = library.lookup(data_f)
+            reverse = library.lookup(data_r)
         else:
-            self.action = library.lookup(data['action'])
-            if data['reverse'] is None:
-                self.reverse = self.action.reverse()
-            else:
-                self.reverse = library.lookup(data['reverse'])
-            self.rate = data['rate']
+            action = library.lookup(data)
+            reverse = action.reverse()
+        rate = 1
+    else:
+        action = library.lookup(data['action'])
+        if data['reverse'] is None:
+            reverse = action.reverse()
+        else:
+            reverse = library.lookup(data['reverse'])
+        rate = data['rate']
 
-        if self.action is None:
-            raise RuntimeError('bad action in ' + name)
-        if self.reverse is None:
-            raise RuntimeError('bad reverse in ' + name)
-        if not (1 <= self.rate <= 5):
-            raise RuntimeError('bad rate in ' + name)
+    if action is None:
+        raise RuntimeError('bad action in ' + name)
+    if reverse is None:
+        raise RuntimeError('bad reverse in ' + name)
+    if not (1 <= rate <= 5):
+        raise RuntimeError('bad rate in ' + name)
 
-    def __repr__(self):
-        return f'DialCfg(name={self.name}, action={self.action}, reverse={self.reverse}, rate={self.rate})'
+    return DialCtrl(name, action, reverse, rate)
 
 
 class Layout:
-    controls = {
-        'prime': {
-            'side': ButtonCfg,
-            'top': ButtonCfg,
-            'tall': ButtonCfg,
-            'short': ButtonCfg,
-            'top_x2': ButtonCfg,
-            'side_x2': ButtonCfg,
-            'tall_x2': ButtonCfg,
-            'short_x2': ButtonCfg,
-            'side_top': ButtonCfg,
-            'side_tall': ButtonCfg,
-            'side_short': ButtonCfg,
-            'top_tall': ButtonCfg,
-            'top_short': ButtonCfg,
-            'tall_short': ButtonCfg,
-        },
-        'kit': {
-            'tour': ButtonCfg,
-            'up': ButtonCfg,
-            'down': ButtonCfg,
-            'left': ButtonCfg,
-            'right': ButtonCfg,
-            'c1': ButtonCfg,
-            'c2': ButtonCfg,
-            'top_up': ButtonCfg,
-            'top_down': ButtonCfg,
-            'top_left': ButtonCfg,
-            'top_right': ButtonCfg,
-            'side_up': ButtonCfg,
-            'side_down': ButtonCfg,
-            'side_left': ButtonCfg,
-            'side_right': ButtonCfg,
-            'tall_c1': ButtonCfg,
-            'tall_c2': ButtonCfg,
-            'short_c1': ButtonCfg,
-            'short_c2': ButtonCfg,
-        },
-        'knob': {
-            'press': ButtonCfg,
-            'turn': DialCfg,
-            'side_turn': DialCfg,
-            'top_turn': DialCfg,
-            'tall_turn': DialCfg,
-            'short_turn': DialCfg,
-        },
-        'scroll': {
-            'press': ButtonCfg,
-            'turn': DialCfg,
-            'side_turn': DialCfg,
-            'top_turn': DialCfg,
-            'tall_turn': DialCfg,
-            'short_turn': DialCfg,
-        },
-        'dial': {
-            'press': ButtonCfg,
-            'turn': DialCfg,
-        },
-    }
-
-    def __init__(self, name, data):
+    def __init__(self, name, data, library):
         self.name = name
         self.controls = {
             'prime': {},
@@ -131,49 +60,29 @@ class Layout:
             'dial': {},
         }
 
-        extra_keys = set(
-            data.keys()) - {'prime', 'kit', 'knob', 'scroll', 'dial'}
+        extra_keys = set(data.keys()) - set(controls.keys())
         if len(extra_keys) > 0:
-            raise RuntimeError('unexpected keys in layout:' + str(extra_keys))
+            raise RuntimeError('Unexpected keys in layout:' + str(extra_keys))
 
         for s_name, s_data in data.items():
             for c_name, c_data in s_data.items():
-                c = Layout.controls[s_name][c_name]
-                self.controls[s_name][c_name] = c(c_name, c_data)
+                kind = controls[s_name][c_name]
+                if kind == ButtonCtrl:
+                    control = parse_button(c_name, c_data, library)
+                elif kind == DialCtrl:
+                    control = parse_dial(c_name, c_data, library)
+                else:
+                    raise Error('Bad control kind')
+                self.controls[s_name][c_name] = control
 
     def __repr__(self):
         return f'Layout(name={self.name})'
 
 
-class Shortcut:
-
-    def __init__(self, name, data):
-        self.name = name
-        self.key = None
-        self.shift = False
-        self.ctrl = False
-        self.alt = False
-        self.super = False
-
-
-class Macro:
-
-    def __init__(self, name, data):
-        self.name = name
-        self.actions = []
-
-
-class Menu:
-
-    def __init__(self, name, data):
-        self.name = name
-        self.entries = None
-
-
 class Config:
-
     def __init__(self, data):
         self.name = data['name']
+        self.library = Library()
         self.layouts = {}
         self.shortcuts = {}
         self.macros = {}
@@ -186,28 +95,45 @@ class Config:
         if data['layouts']['main'] is None:
             raise RuntimeError('no main layout')
         expected_keys = {'name', 'layouts', 'shortcuts', 'macros', 'menus'}
-        extra_keys = set(data.keys()) - expected_keys
-        if len(extra_keys) > 0:
-            raise RuntimeError('unexpected keys in config:' + str(extra_keys))
-
-        for l_name, l_data in data['layouts'].items():
-            layout = Layout(l_name, l_data)
-            self.layouts[layout.name] = layout
-            # for s_name, section in layout.items():
-            #     for key, cmd_str in section.items():
-            #         section[key] = library.lookup(cmd_str)
+        if len(set(data.keys()) - expected_keys) > 0:
+            raise RuntimeError('unexpected keys:' + str(data.keys()))
 
         for s_name, s_data in data['shortcuts'].items():
-            shortcut = Shortcut(s_name, s_data)
-            self.shortcuts[shortcut.name] = shortcut
+            self.register_shortcut(s_name, s_data)
 
         for m_name, m_data in data['macros'].items():
-            macro = Macro(m_name, m_data)
+            macro = Macro(m_name, m_data, self.library)
             self.macros[macro.name] = macro
 
         for m_name, m_data in data['menus'].items():
-            menu = Menu(m_name, m_data)
+            menu = Menu(m_name, m_data, self.library)
             self.menus[menu.name] = menu
+
+        for l_name, l_data in data['layouts'].items():
+            layout = Layout(l_name, l_data, self.library)
+            self.layouts[layout.name] = layout
+
+    def register_shortcut(self, name, data):
+        if isinstance(data, str):
+            action = self.library.lookup(data)
+        else:
+            action = self.library.lookup(data['action'])
+            expected_keys = {'action', 'shift', 'ctrl', 'alt', 'super'}
+            if len(set(data.keys()) - expected_keys) > 0:
+                raise RuntimeError('unexpected keys:' + str(data.keys()))
+            mods = {'shift', 'ctrl', 'alt', 'super'}
+            mod_data = {k: data[k] for k in mods if k in data}
+            action = action.with_mods(**mod_data)
+
+        self.shortcuts[name] = action
+        self.library.push(action.with_name(name))
+
+    def register_macro(self, name, data):
+        pass
+
+    def register_menu(self, name, data):
+        if data['entries'] is None:
+            raise RuntimeError('no entries')
 
     @staticmethod
     def from_file(config_path):
@@ -228,4 +154,3 @@ class Config:
         logger.info('loaded %s', config_path.name)
 
         return config
-

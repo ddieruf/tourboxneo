@@ -43,7 +43,7 @@ def main():
 
     args = parser.parse_args()
 
-    logger.setLevel(30 - (max(args.verbose, 2) * 10))
+    logger.setLevel(30 - (min(args.verbose, 2) * 10))
 
     config = Config.from_file(args.config)
 

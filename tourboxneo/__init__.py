@@ -1,10 +1,11 @@
 from evdev import UInput, ecodes as e
+from evdev.device import KbdInfo
 from time import sleep
 import logging
 import toml
 
 from .reader import Reader
-from .config import ButtonCfg, DialCfg
+from .controls import ButtonCtrl, DialCtrl, clobbers
 
 VERSION = '0.3'
 
@@ -54,11 +55,65 @@ class Service:
         self.controller = UInput(
             {
                 e.EV_KEY: e.keys.keys(),
-                e.EV_REL: [e.REL_WHEEL, e.REL_HWHEEL]
+                e.EV_REL: [e.REL_WHEEL, e.REL_HWHEEL],
             },
             name='TourBoxNEO',
             vendor=0x0483,
             product=0x5740)
+
+    def clobber(self, btn):
+        cbs = clobbers[btn.group].get(btn.key, None)
+        if cbs is None:
+            return
+        for c in cbs:
+            self.release(c)
+
+    def press(self, btn, reverse):
+        self.clobber(btn)
+
+        layout = self.config.layouts[self.layout]
+        cmd = layout.controls[btn.group][btn.key]
+        if cmd is None:
+            return
+        logger.debug('Command found: %s', cmd)
+
+        if isinstance(cmd, ButtonCtrl):
+            if (btn.group, btn.key) in self.held:
+                raise Error('Double hold')
+            if cmd.kind == 'hold':
+                self.held[(btn.group, btn.key)] = cmd
+                cmd.action.press(self.controller)
+                logger.debug('Hold starts: %s', cmd.action)
+            elif cmd.kind == 'up':
+                self.held[(btn.group, btn.key)] = cmd
+            elif cmd.kind == 'down':
+                cmd.action.press(self.controller)
+                cmd.action.release(self.controller)
+                logger.debug('Down triggers: %s', cmd.action)
+        elif isinstance(cmd, DialCtrl):
+            action = cmd.action if not reverse else cmd.reverse
+            action.press(self.controller)
+            action.release(self.controller)
+            logger.debug('Dial moves: %s', action)
+        else:
+            raise Error('Invalid command')
+
+    def release(self, btn):
+        cmd = self.held.pop((btn.group, btn.key), None)
+        if cmd is None:
+            return
+        if not isinstance(cmd, ButtonCtrl):
+            raise Error('Releasing non-button')
+        if cmd.kind == 'hold':
+            cmd.action.release(self.controller)
+            logger.debug('Hold ends: %s', cmd.action)
+        elif cmd.kind == 'up':
+            cmd.action.press(self.controller)
+            cmd.action.release(self.controller)
+            logger.debug('Up triggers: %s', cmd.action)
+        elif cmd.kind == 'down':
+            raise Error('Releasing down button')
+
 
     def tick(self):
         if not self.check_input():
@@ -75,45 +130,8 @@ class Service:
         btn, release, reverse = data
 
         if not release:
-            layout = self.config.layouts[self.layout]
-            cmd = layout.controls[btn.group][btn.key]
-            if cmd is None:
-                return
-            logger.debug('Command pressed: %s', cmd)
-
-            if isinstance(cmd, ButtonCfg):
-                if (btn.group, btn.key) in self.held:
-                    raise Error('Double hold')
-                if cmd.kind == 'tap':
-                    cmd.action.press(self.controller)
-                    cmd.action.release(self.controller)
-                elif cmd.kind == 'release':
-                    self.held[(btn.group, btn.key)] = cmd
-                elif cmd.kind == 'hold':
-                    self.held[(btn.group, btn.key)] = cmd
-                    cmd.action.press(self.controller)
-            elif isinstance(cmd, DialCfg):
-                action = cmd.action if not reverse else cmd.reverse
-                action.press(self.controller)
-                action.release(self.controller)
-            else:
-                raise Error('Invalid command')
-
+            self.press(btn, reverse)
         else:
-            cmd = self.held.pop((btn.group, btn.key), None)
-            if cmd is None:
-                return
-            if not isinstance(cmd, ButtonCfg):
-                raise Error('Releasing non-button')
-            if cmd.kind == 'tap':
-                raise Error('Releasing tap')
-            elif cmd.kind == 'release':
-                cmd.action.press(self.controller)
-                cmd.action.release(self.controller)
-            elif cmd.kind == 'hold':
-                cmd.action.release(self.controller)
-            logger.debug('Command released: %s', cmd)
+            self.release(btn)
 
         self.controller.syn()
-
-        logger.debug('Currently held: %s', self.held)

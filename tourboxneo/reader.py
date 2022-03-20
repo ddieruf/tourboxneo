@@ -20,7 +20,7 @@ class Button:
 
     def __repr__(self):
         byte = hex(self.byte)
-        return f'Button(group={self.group}, key={self.key}, byte={byte})'
+        return f'Button({self.group}.{self.key} b{byte})'
 
 
 BUTTONS = [
@@ -73,7 +73,20 @@ BUTTONS = [
     Button('dial', 'turn', 0x0f),
 ]
 
-MAP = {b.byte: b for b in BUTTONS}
+BYTEMAP = {b.byte: b for b in BUTTONS}
+
+MAP = {
+    'prime': {b.key: b
+              for b in BUTTONS if b.group == 'prime'},
+    'kit': {b.key: b
+            for b in BUTTONS if b.group == 'kit'},
+    'knob': {b.key: b
+             for b in BUTTONS if b.group == 'knob'},
+    'scroll': {b.key: b
+               for b in BUTTONS if b.group == 'scroll'},
+    'dial': {b.key: b
+             for b in BUTTONS if b.group == 'dial'},
+}
 
 
 class Reader:
@@ -113,7 +126,7 @@ class Reader:
 
         if len(bs) > 0:
             b = bs[0]
-            btn = MAP.get(b & BUTTON_MASK, None)
+            btn = BYTEMAP.get(b & BUTTON_MASK, None)
             if btn is None:
                 logger.warn(f'Unknown byte {hex(b)}')
             release = bool(b & RELEASE_MASK)
