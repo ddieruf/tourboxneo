@@ -4,6 +4,7 @@ from time import sleep
 import logging
 import toml
 
+from .actions import ActionNone
 from .reader import Reader
 from .controls import ButtonCtrl, DialCtrl, clobbers
 
@@ -69,13 +70,13 @@ class Service:
             self.release(c)
 
     def press(self, btn, reverse):
-        self.clobber(btn)
-
         layout = self.config.layouts[self.layout]
         cmd = layout.controls[btn.group][btn.key]
-        if cmd is None:
+        if cmd is None or isinstance(cmd, ActionNone):
             return
         logger.debug('Command found: %s', cmd)
+
+        self.clobber(btn)
 
         if isinstance(cmd, ButtonCtrl):
             if (btn.group, btn.key) in self.held:

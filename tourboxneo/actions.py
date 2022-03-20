@@ -67,6 +67,10 @@ class Action:
         return f'Action(name={self.name}, mods={mods})'
 
 
+class ActionNone(Action):
+    pass
+
+
 class ActionKey(Action):
     def __init__(self, name, key, **mods):
         super().__init__(name, **mods)
@@ -175,7 +179,7 @@ class Library:
 
 
 def library_defaults(library):
-    library.push(Action('none'))
+    library.push(ActionNone('none'))
 
     library.push(ActionKey('esc', e.KEY_ESC))
     library.push(ActionKey('backspace', e.KEY_ESC))

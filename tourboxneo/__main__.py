@@ -39,6 +39,7 @@ def main():
                         type=str,
                         default=os.getenv('pidfile', 'tourboxneo.pid'),
                         help='pid file')
+    parser.add_argument('-D', '--daemon', default=False)
     parser.add_argument('-v', '--verbose', action='count', default=0)
 
     args = parser.parse_args()
@@ -48,8 +49,9 @@ def main():
     config = Config.from_file(args.config)
 
     # pid file
-    p = Path(args.pidfile)
-    p.write_text(str(os.getpid()))
+    if args.daemon:
+        p = Path(args.pidfile)
+        p.write_text(str(os.getpid()))
 
     with Service(config, args.device) as service:
         while not killer.exiting:
