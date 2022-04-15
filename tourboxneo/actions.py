@@ -1,54 +1,71 @@
 from evdev import ecodes as e
+from copy import copy
 import logging
-import copy
 import re
+
+from .menu import Menu, gui_thread
 
 logger = logging.getLogger(__name__)
 
 
 class Action:
-    def __init__(self, name, shift=False, ctrl=False, alt=False, cmd=False):
+    def __init__(self, name):
         self.name = name
+
+    def with_name(self, name):
+        new = copy(self)
+        new.name = name
+        return new
+
+    def press(self, writer):
+        pass
+
+    def release(self, writer):
+        pass
+
+    def __repr__(self):
+        return f'Action(name={self.name})'
+
+
+class ActionNone(Action):
+    pass
+
+
+class ActionMod(Action):
+    def __init__(self, name, shift=False, ctrl=False, alt=False, cmd=False):
+        super().__init__(name)
         self.shift = shift
         self.ctrl = ctrl
         self.alt = alt
         self.cmd = cmd
 
-    def with_name(self, name):
-        new = copy.copy(self)
-        new.name = name
-        return new
-
     def with_mods(self, shift=False, ctrl=False, alt=False, cmd=False):
-        new = copy.copy(self)
+        new = copy(self)
         new.shift = self.shift or shift
         new.ctrl = self.ctrl or ctrl
         new.alt = self.alt or alt
         new.cmd = self.cmd or cmd
         return new
 
-    def press(self, controller):
+    def press(self, writer):
         if self.shift:
-            controller.write(e.EV_KEY, e.KEY_LEFTSHIFT, 1)
+            writer.write(e.EV_KEY, e.KEY_LEFTSHIFT, 1)
         if self.ctrl:
-            controller.write(e.EV_KEY, e.KEY_LEFTCTRL, 1)
+            writer.write(e.EV_KEY, e.KEY_LEFTCTRL, 1)
         if self.alt:
-            controller.write(e.EV_KEY, e.KEY_LEFTALT, 1)
+            writer.write(e.EV_KEY, e.KEY_LEFTALT, 1)
         if self.cmd:
-            controller.write(e.EV_KEY, e.KEY_LEFTSHIFT, 1)
+            writer.write(e.EV_KEY, e.KEY_LEFTMETA, 1)
 
-    def release(self, controller):
+    def release(self, writer):
         if self.shift:
-            controller.write(e.EV_KEY, e.KEY_LEFTSHIFT, 0)
+            writer.write(e.EV_KEY, e.KEY_LEFTSHIFT, 0)
         if self.ctrl:
-            controller.write(e.EV_KEY, e.KEY_LEFTCTRL, 0)
+            writer.write(e.EV_KEY, e.KEY_LEFTCTRL, 0)
         if self.alt:
-            controller.write(e.EV_KEY, e.KEY_LEFTALT, 0)
+            writer.write(e.EV_KEY, e.KEY_LEFTALT, 0)
         if self.cmd:
-            controller.write(e.EV_KEY, e.KEY_LEFTSHIFT, 0)
-
-    def reverse(self):
-        return self
+            writer.write(e.EV_KEY, e.KEY_LEFTMETA, 0)
 
     def __repr_mods__(self):
         mods = ''
@@ -64,47 +81,43 @@ class Action:
 
     def __repr__(self):
         mods = self.__repr_mods__()
-        return f'Action(name={self.name}, mods={mods})'
+        return f'ActionMod(name={self.name}, mods={mods})'
 
 
-class ActionNone(Action):
-    pass
-
-
-class ActionKey(Action):
+class ActionKey(ActionMod):
     def __init__(self, name, key, **mods):
         super().__init__(name, **mods)
         self.key = key
 
-    def press(self, controller):
-        super().press(controller)
-        controller.write(e.EV_KEY, self.key, 1)
+    def press(self, writer):
+        super().press(writer)
+        writer.write(e.EV_KEY, self.key, 1)
 
-    def release(self, controller):
-        super().release(controller)
-        controller.write(e.EV_KEY, self.key, 0)
+    def release(self, writer):
+        super().release(writer)
+        writer.write(e.EV_KEY, self.key, 0)
 
     def __repr__(self):
         mods = self.__repr_mods__()
         return f'ActionKey(name={self.name}, mods={mods}, key={self.key})'
 
 
-class ActionRel(Action):
+class ActionRel(ActionMod):
     def __init__(self, name, rel, step, **mods):
         super().__init__(name, **mods)
         self.rel = rel
         self.step = step
 
-    def press(self, controller):
-        super().press(controller)
-        controller.write(e.EV_REL, self.rel, self.step)
+    def press(self, writer):
+        super().press(writer)
+        writer.write(e.EV_REL, self.rel, self.step)
 
-    def release(self, controller):
-        super().release(controller)
-        controller.write(e.EV_REL, self.rel, 0)
+    def release(self, writer):
+        super().release(writer)
+        writer.write(e.EV_REL, self.rel, 0)
 
     def reverse(self):
-        a = copy.copy(self)
+        a = copy(self)
         a.step = -self.step
         return a
 
@@ -118,14 +131,33 @@ class ActionMacro(Action):
         super().__init__(name)
         self.actions = actions
 
-    def press(self, controller):
-        super().press(controller)
+    def press(self, writer):
+        super().press(writer)
+        for action in self.actions:
+            action.press(writer)
+            action.release(writer)
 
-    def release(self, controller):
-        super().release(controller)
+    def release(self, writer):
+        super().release(writer)
 
     def __repr__(self):
         return f'ActionMacro(name={self.name})'
+
+
+class ActionMenu(Action):
+    def __init__(self, name, entries):
+        super().__init__(name)
+        self.entries = entries
+
+    def press(self, writer):
+        super().press(writer)
+        start_tk(Menu())
+
+    def release(self, writer):
+        super().release(writer)
+
+    def __repr__(self):
+        return f'ActionMenu(name={self.name})'
 
 
 split_mod_re = re.compile('^([SCMAD])-')
@@ -148,7 +180,7 @@ def split_mods(cmd_str):
     return mods, cmd_str
 
 
-def split_rev(cmd_str):
+def split_reverse(cmd_str):
     rev = cmd_str.endswith('-')
     cmd_str = cmd_str.rstrip('-+')
     return rev, cmd_str
@@ -161,12 +193,12 @@ class Library:
 
     def lookup(self, cmd_str):
         mods, cmd_str = split_mods(cmd_str)
-        rev, cmd_str = split_rev(cmd_str)
+        rev, cmd_str = split_reverse(cmd_str)
         cmd = self.cmds[cmd_str]
-        if rev:
-            cmd = cmd.reverse()
-        if mods:
+        if isinstance(cmd, ActionMod) and mods:
             cmd = cmd.with_mods(**mods)
+        if isinstance(cmd, ActionRel) and rev:
+            cmd = cmd.reverse()
         return cmd
 
     def push(self, cmd):

@@ -41,7 +41,7 @@ top_short = "none"
 tall_short = "none"
 
 [layouts.main.kit]
-tour = "none"
+tour = "example_menu"
 
 up = "up"
 down = "down"
@@ -103,13 +103,17 @@ alt = true
 
 [macros]
 
-[macros.tourbox]
-[[macros.tourbox.entries]]
-action = ""
+[macros.example_macro]
+[[macros.example_macro.entries]]
+action = "none"
+[[macros.example_macro.entries]]
+delay = "1s"
+[[macros.example_macro.entries]]
+open = "file"
 
 [menus]
 
-[menus.layouts]
-
-[[menus.layouts.entries]]
-func = "layout(main)"
+[menus.example_menu]
+[[menus.example_menu.entries]]
+name = "Main Layout"
+action = "main"

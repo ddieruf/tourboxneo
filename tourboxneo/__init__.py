@@ -18,7 +18,7 @@ class Service:
     def __init__(self, config, device):
         self.config = config
         self.device = device
-        self.controller = None
+        self.writer = None
         self.layout = 'main'
         self.held = {} # currently held buttons, no dials
         self.counters = {}  # counters for dials
@@ -53,7 +53,7 @@ class Service:
         return self.reader is not None
 
     def connect_output(self):
-        self.controller = UInput(
+        self.writer = UInput(
             {
                 e.EV_KEY: e.keys.keys(),
                 e.EV_REL: [e.REL_WHEEL, e.REL_HWHEEL],
@@ -83,18 +83,18 @@ class Service:
                 raise Error('Double hold')
             if cmd.kind == 'hold':
                 self.held[(btn.group, btn.key)] = cmd
-                cmd.action.press(self.controller)
+                cmd.action.press(self.writer)
                 logger.debug('Hold starts: %s', cmd.action)
             elif cmd.kind == 'up':
                 self.held[(btn.group, btn.key)] = cmd
             elif cmd.kind == 'down':
-                cmd.action.press(self.controller)
-                cmd.action.release(self.controller)
+                cmd.action.press(self.writer)
+                cmd.action.release(self.writer)
                 logger.debug('Down triggers: %s', cmd.action)
         elif isinstance(cmd, DialCtrl):
             action = cmd.action if not reverse else cmd.reverse
-            action.press(self.controller)
-            action.release(self.controller)
+            action.press(self.writer)
+            action.release(self.writer)
             logger.debug('Dial moves: %s', action)
         else:
             raise Error('Invalid command')
@@ -106,11 +106,11 @@ class Service:
         if not isinstance(cmd, ButtonCtrl):
             raise Error('Releasing non-button')
         if cmd.kind == 'hold':
-            cmd.action.release(self.controller)
+            cmd.action.release(self.writer)
             logger.debug('Hold ends: %s', cmd.action)
         elif cmd.kind == 'up':
-            cmd.action.press(self.controller)
-            cmd.action.release(self.controller)
+            cmd.action.press(self.writer)
+            cmd.action.release(self.writer)
             logger.debug('Up triggers: %s', cmd.action)
         elif cmd.kind == 'down':
             raise Error('Releasing down button')
@@ -135,4 +135,4 @@ class Service:
         else:
             self.release(btn)
 
-        self.controller.syn()
+        self.writer.syn()

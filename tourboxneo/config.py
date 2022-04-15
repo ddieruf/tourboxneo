@@ -2,7 +2,7 @@ import logging
 import toml
 from pathlib import Path
 
-from .actions import Library
+from .actions import Library, ActionNone, ActionRel, ActionMenu
 from .controls import ButtonCtrl, DialCtrl, controls
 
 logger = logging.getLogger(__name__)
@@ -22,22 +22,26 @@ def parse_button(name, data, library):
 
 
 def parse_dial(name, data, library):
+    reverse = None
     if isinstance(data, str):
         if data != '/' and '/' in data:
-            data_f, data_r = data.split('/', 1)
-            action = library.lookup(data_f)
+            data, data_r = data.split('/', 1)
             reverse = library.lookup(data_r)
-        else:
-            action = library.lookup(data)
-            reverse = action.reverse()
+        action = library.lookup(data)
         rate = 1
     else:
         action = library.lookup(data['action'])
-        if data['reverse'] is None:
-            reverse = action.reverse()
-        else:
+        if 'reverse' in data:
             reverse = library.lookup(data['reverse'])
         rate = data['rate']
+
+    if reverse is None:
+        if isinstance(action, ActionRel):
+            reverse = action.reverse()
+        elif isinstance(action, ActionNone):
+            reverse = action
+        else:
+            raise RuntimeError('Non-reversible dial for ' + name)
 
     if action is None:
         raise RuntimeError('bad action in ' + name)
@@ -102,25 +106,22 @@ class Config:
             self.register_shortcut(s_name, s_data)
 
         for m_name, m_data in data['macros'].items():
-            macro = Macro(m_name, m_data, self.library)
-            self.macros[macro.name] = macro
+            self.register_macro(m_name, m_data)
 
         for m_name, m_data in data['menus'].items():
-            menu = Menu(m_name, m_data, self.library)
-            self.menus[menu.name] = menu
+            self.register_menu(m_name, m_data)
 
         for l_name, l_data in data['layouts'].items():
-            layout = Layout(l_name, l_data, self.library)
-            self.layouts[layout.name] = layout
+            self.register_layout(l_name, l_data)
 
     def register_shortcut(self, name, data):
         if isinstance(data, str):
             action = self.library.lookup(data)
         else:
-            action = self.library.lookup(data['action'])
             expected_keys = {'action', 'shift', 'ctrl', 'alt', 'super'}
             if len(set(data.keys()) - expected_keys) > 0:
                 raise RuntimeError('unexpected keys:' + str(data.keys()))
+            action = self.library.lookup(data['action'])
             mods = {'shift', 'ctrl', 'alt', 'super'}
             mod_data = {k: data[k] for k in mods if k in data}
             action = action.with_mods(**mod_data)
@@ -134,6 +135,11 @@ class Config:
     def register_menu(self, name, data):
         if data['entries'] is None:
             raise RuntimeError('no entries')
+        self.library.push(ActionMenu(name, data['entries']))
+
+    def register_layout(self, name, data):
+        layout = Layout(name, data, self.library)
+        self.layouts[layout.name] = layout
 
     @staticmethod
     def from_file(config_path):
