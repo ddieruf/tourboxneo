@@ -1,9 +1,6 @@
 import logging
-import toml
-import time
-import tkinter as tk
+from tkinter import *
 from tkinter import ttk
-from threading import *
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +15,7 @@ def start_tk(tk):
     tk.mainloop()
 
 
-class Menu(tk.Tk):
+class Menu(Tk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

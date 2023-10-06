@@ -3,7 +3,7 @@ from copy import copy
 import logging
 import re
 
-from .menu import Menu, gui_thread
+from menu import Menu, gui_thread
 
 logger = logging.getLogger(__name__)
 

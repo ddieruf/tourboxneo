@@ -35,3 +35,7 @@ MANIFEST
 # ignore pidfile
 tourboxneo.pid
 
+
+.idea/
+
+tourbox-venv/

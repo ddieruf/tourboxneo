@@ -4,8 +4,8 @@ import signal
 import os
 from pathlib import Path
 
-from .config import Config
-from . import Service
+from config import Config
+from tourboxneo import Service
 
 logger = logging.getLogger('tourboxneo')
 

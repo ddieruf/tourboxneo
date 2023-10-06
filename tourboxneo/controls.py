@@ -1,7 +1,7 @@
 import logging
 
-from .actions import Action
-from .reader import MAP
+from actions import Action
+from reader import MAP
 
 logger = logging.getLogger(__name__)
 

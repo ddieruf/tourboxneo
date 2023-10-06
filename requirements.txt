@@ -1,4 +1,4 @@
 pyserial
-evdev
-toml
-tk
+toml~=0.10.2
+tk~=0.1.0
+evdev~=1.6.1

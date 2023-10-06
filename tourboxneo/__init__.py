@@ -1,12 +1,11 @@
-from evdev import UInput, ecodes as e
-from evdev.device import KbdInfo
-from time import sleep
 import logging
-import toml
+from time import sleep
 
-from .actions import ActionNone
-from .reader import Reader
-from .controls import ButtonCtrl, DialCtrl, clobbers
+from evdev import UInput, ecodes as e
+
+from actions import ActionNone
+from controls import ButtonCtrl, DialCtrl, clobbers
+from reader import Reader
 
 VERSION = '0.3'
 
@@ -80,7 +79,7 @@ class Service:
 
         if isinstance(cmd, ButtonCtrl):
             if (btn.group, btn.key) in self.held:
-                raise Error('Double hold')
+                raise Exception('Double hold')
             if cmd.kind == 'hold':
                 self.held[(btn.group, btn.key)] = cmd
                 cmd.action.press(self.writer)
@@ -97,14 +96,14 @@ class Service:
             action.release(self.writer)
             logger.debug('Dial moves: %s', action)
         else:
-            raise Error('Invalid command')
+            raise Exception('Invalid command')
 
     def release(self, btn):
         cmd = self.held.pop((btn.group, btn.key), None)
         if cmd is None:
             return
         if not isinstance(cmd, ButtonCtrl):
-            raise Error('Releasing non-button')
+            raise Exception('Releasing non-button')
         if cmd.kind == 'hold':
             cmd.action.release(self.writer)
             logger.debug('Hold ends: %s', cmd.action)
@@ -113,7 +112,7 @@ class Service:
             cmd.action.release(self.writer)
             logger.debug('Up triggers: %s', cmd.action)
         elif cmd.kind == 'down':
-            raise Error('Releasing down button')
+            raise Exception('Releasing down button')
 
 
     def tick(self):

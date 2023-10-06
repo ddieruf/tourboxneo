@@ -2,8 +2,8 @@ import logging
 import toml
 from pathlib import Path
 
-from .actions import Library, ActionNone, ActionRel, ActionMenu
-from .controls import ButtonCtrl, DialCtrl, controls
+from actions import Library, ActionNone, ActionRel, ActionMenu
+from controls import ButtonCtrl, DialCtrl, controls
 
 logger = logging.getLogger(__name__)
 
